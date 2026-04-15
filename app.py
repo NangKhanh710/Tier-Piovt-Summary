@@ -348,7 +348,7 @@ def send_email_outlook(to_addr: str, subject: str, body: str, excel_bytes: bytes
 st.markdown("""
 <div class="header-block">
     <h1>📊 TIER PIVOT REPORT</h1>
-    <p>Sales performance by account tier · Monthly breakdown · USD millions</p>
+    <p>Sales performance by account tier · Monthly breakdown </p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -455,7 +455,7 @@ with col_left:
     st.dataframe(display_tier, use_container_width=True, height=400, hide_index=True)
 
 with col_right:
-    st.markdown('<p class="section-label">Pivot: Tier × Month (USD Millions)</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-label">Pivot: Tier (Monhtly Sales)</p>', unsafe_allow_html=True)
     st.dataframe(
         pivot_df.style.format("{:.3f}").highlight_max(axis=1, color="#1e2a1e"),
         use_container_width=True,
