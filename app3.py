@@ -599,3 +599,5 @@ with col_email:
                     st.success(f"✅ Sent to {email_to}")
                 except Exception as e:
                     st.error(f"❌ Failed: {e}")
+
+
