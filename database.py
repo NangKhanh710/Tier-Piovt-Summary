@@ -22,7 +22,7 @@ def load_data() -> pd.DataFrame:
 
     df_customer = pd.read_sql("""
         SELECT T0.CustomerID, T0.CustomerName, T0.Address, T0.RegionID,
-               T0.CityID, T0.AccountID, T1.AccountName,
+               T0.CityID, T0.AccountID, T1.AccountName,T1.AccountDisplay,
                CASE
                    WHEN T0.ChannelName = '21-Gov. Hosp - Dept'    THEN '101'
                    WHEN T0.ChannelName = '22-Gov. Hosp - Phar'    THEN '102'
@@ -57,5 +57,14 @@ def load_data() -> pd.DataFrame:
         ) AS T1 ON T0.Cust_Brand = T1.Cust_Brand
     """, conn)
 
+    df_brand = pd.read_excel(r"C:\Users\khwk503\AZCollaboration\AZVN ComEx - AZVN Dashboard\Pre_CP_Monthly_Dashboard\CategoryBank.xlsx", sheet_name="Brand")
+    df_region = pd.read_excel(r"C:\Users\khwk503\AZCollaboration\AZVN ComEx - AZVN Dashboard\Pre_CP_Monthly_Dashboard\CategoryBank.xlsx", sheet_name="Region")
+    df_channel = pd.read_excel(r"C:\Users\khwk503\AZCollaboration\AZVN ComEx - AZVN Dashboard\Pre_CP_Monthly_Dashboard\CategoryBank.xlsx", sheet_name="Channel")    
+
+
+
+
     df = df_sales.merge(df_customer, on="CustomerID", how="left")
+
+    #df = df.merge(df_brand[["BrandID", "BrandCategory"]], on="BrandID", how="left")
     return df

@@ -13,17 +13,22 @@ from openpyxl.utils import get_column_letter
 import plotly.express as px
 import plotly.graph_objects as go
 import warnings
+import base64
+from pathlib import Path
+from PIL import Image
 warnings.filterwarnings("ignore")
 
 from database import load_data
 
 # ── AstraZeneca logo as SVG inline (official diamond shape) ──────────────────
-AZ_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/twentytwo/AstraZeneca_logo.svg/200px-AstraZeneca_logo.svg.png"
 
-# ── Page config ───────────────────────────────────────────────────────────────
+
+BASE_DIR = Path(__file__).parent
+AZ_LOGO = Image.open(BASE_DIR / "assets" / "AZLogobyCopilot.png")
+
 st.set_page_config(
-    page_title="AZ · Tier Pivot Report",
-    page_icon="💊",
+    page_title="AZ · Tier Report",
+    page_icon=AZ_LOGO,
     layout="wide",
 )
 
@@ -38,7 +43,7 @@ html, body, [class*="css"] { font-family: 'Figtree', sans-serif; }
 
 /* ── Header ── */
 .az-header {
-    background: linear-gradient(135deg, #1a0050 0%, #3a0ca3 60%, #560bad 100%);
+    background: linear-gradient(135deg, #830051 );
     border-radius: 12px;
     padding: 20px 28px;
     margin-bottom: 24px;
@@ -88,14 +93,14 @@ html, body, [class*="css"] { font-family: 'Figtree', sans-serif; }
     color: #999;
     margin-top: 2px;
 }
-.kpi-t1 { border-top-color: #00b894; }
-.kpi-t2 { border-top-color: #6c5ce7; }
-.kpi-t3 { border-top-color: #0984e3; }
-.kpi-te { border-top-color: #d63031; }
-.num-t1 { color: #00b894; }
-.num-t2 { color: #6c5ce7; }
-.num-t3 { color: #0984e3; }
-.num-te { color: #d63031; }
+.kpi-t1 { border-top-color: #830051; }
+.kpi-t2 { border-top-color: #F0AB00; }
+.kpi-t3 { border-top-color: #B0126D; }
+.kpi-te { border-top-color: #C28F17; }
+.num-t1 { color: #830051; }
+.num-t2 { color: #F0AB00; }
+.num-t3 { color: #B0126D; }
+.num-te { color: #C28F17; }
 
 /* ── Section headers ── */
 .section-title {
@@ -109,12 +114,12 @@ html, body, [class*="css"] { font-family: 'Figtree', sans-serif; }
     border-bottom: 1px solid #e0e0e0;
 }
 
-/* ── Sidebar ── */
+/* ── Filter Pane ── */
 [data-testid="stSidebar"] {
-    background: #1a0050 !important;
+    background: #830051 !important;
 }
 [data-testid="stSidebar"] * { color: #e8e8ff !important; }
-[data-testid="stSidebar"] .section-title { color: rgba(255,255,255,0.5) !important; border-bottom-color: rgba(255,255,255,0.15) !important; }
+[data-testid="stSidebar"] .section-title { color: rgba(255, 255, 255, 0.95) !important; border-bottom-color: rgba(255,255,255,0.15) !important; }
 [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.15) !important; }
 
 /* ── Buttons ── */
@@ -142,8 +147,45 @@ div[data-testid="stDataFrame"] {
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
+
+/* Table background & text */
+[data-testid="stDataFrame"] table {
+    background-color: white !important;
+    color: #1a1a1a !important;
+}
+
+/* Column headers */
+[data-testid="stDataFrame"] thead tr th {
+    background-color: #830051 !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* Rows */
+[data-testid="stDataFrame"] tbody tr td {
+    background-color: white !important;
+    color: #1a1a1a !important;
+}
+
+/* Alternating row (optional zebra stripe) */
+[data-testid="stDataFrame"] tbody tr:nth-child(even) td {
+    background-color: #fdf4f9 !important;
+}
+
+/* Hover row */
+[data-testid="stDataFrame"] tbody tr:hover td {
+    background-color: #f5e6ef !important;
+}
 </style>
 """, unsafe_allow_html=True)
+#AZ logo as base64 for embedding________________________________________________
+
+def get_base64_image(image_path):
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+BASE_DIR = Path(__file__).parent
+logo_b64 = get_base64_image(BASE_DIR / "assets" / "AZLogobyCopilot.png")
 
 # ── TIER CONFIG ───────────────────────────────────────────────────────────────
 TIER_THRESHOLDS = {"Tier 1": 0.51, "Tier 2": 0.81, "Tier 3": 0.96}
@@ -253,11 +295,15 @@ def send_email(to_addr, subject, body, excel_bytes, filename):
 
 
 # ── HEADER ────────────────────────────────────────────────────────────────────
-st.markdown("""
+st.markdown(f"""
 <div class="az-header">
-    <div>
-        <h1>💊 AstraZeneca · Tier Pivot Report</h1>
-        <p>Sales performance by account tier &nbsp;·&nbsp; Monthly breakdown &nbsp;·&nbsp; USD millions</p>
+    <div style="display:flex; align-items:center; gap:16px;">
+        <img src="data:image/png;base64,{logo_b64}" 
+             style="height:56px; width:auto;" />
+        <div>
+            <h1>AstraZeneca · Tier Pivot Report</h1>
+            <p>Sales performance by account tier &nbsp;·&nbsp; Monthly breakdown &nbsp;·&nbsp; USD millions</p>
+        </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -280,7 +326,7 @@ with st.spinner("🔄 Connecting to database..."):
                 for a in accounts for m in range(1, 13)]
         df_raw = pd.DataFrame(rows)
 
-# ── SIDEBAR FILTERS ───────────────────────────────────────────────────────────
+# ── FILTER PANE ───────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<p class="section-title">⚙ Filters</p>', unsafe_allow_html=True)
 
@@ -401,14 +447,9 @@ with chart_col1:
     fig1.update_layout(
         plot_bgcolor="white", paper_bgcolor="white",
         margin=dict(l=10, r=10, t=10, b=40),
-        legend=dict(
-            orientation="h", yanchor="bottom", y=1.02,
-            font=dict(color = "#1a1a2e")),
-        xaxis=dict(
-            tickangle=45,
-            title=dict(font=dict(color="#1a1a2e")),
-            tickfont=dict(color="#1a1a2e"),
-        ),
+        legend=dict(orientation="h", title=dict(font=dict(color="#1a1a2e")), yanchor="bottom", y=1.02,font=dict(color = "#1a1a2e")),
+        xaxis=dict(tickangle=350,title=dict(font=dict(color="#1a1a2e")),tickfont=dict(color="#1a1a2e"),),
+        yaxis=dict(title = dict(font=dict(color="#1a1a2e")),tickfont=dict(color="#1a1a2e")),
         height=320,
     )
     st.plotly_chart(fig1, use_container_width=True)
@@ -449,6 +490,8 @@ with chart_col3:
         showlegend=False,
         margin=dict(l=10, r=10, t=10, b=10),
         plot_bgcolor="white", paper_bgcolor="white",
+        yaxis=dict(title = dict(font=dict(color="#1a1a2e")),tickfont=dict(color="#1a1a2e")),
+        xaxis=dict(title = dict(font=dict(color="#1a1a2e")),tickfont=dict(color="#1a1a2e")),
         height=300,
     )
     st.plotly_chart(fig3, use_container_width=True)
@@ -472,8 +515,9 @@ with chart_col4:
         name="% Revenue",
     ))
     fig4.update_layout(
-        xaxis=dict(tickangle=45, tickfont=dict(size=9)),
+        xaxis=dict(tickangle=45, tickfont=dict(color = "#1a1a2e",size=9)),
         yaxis_title="% Revenue",
+        yaxis=dict(title = dict(font=dict(color="#1a1a2e")),tickfont=dict(color = "#1a1a2e")),
         plot_bgcolor="white", paper_bgcolor="white",
         margin=dict(l=10, r=10, t=10, b=80),
         showlegend=False,
